@@ -6,9 +6,9 @@
   "license": "MIT",
   "main": "websockify.js",
   "bugs": {
-    "url": "https://github.com/maximegris/node-websockify/issues"
+    "url": "https://github.com/vanhooferwin/node-websockify/issues"
   },
-  "homepage": "https://github.com/maximegris/node-websockify#readme",
+  "homepage": "https://github.com/vanhooferwin/node-websockify#readme",
   "keywords": [
     "webscoket",
     "tcp",
@@ -16,7 +16,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/maximegris/node-websockify.git"
+    "url": "git://github.com/vanhooferwin/node-websockify.git"
   },
   "dependencies": {
     "mime": "2.4.4",
