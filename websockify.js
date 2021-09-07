@@ -199,6 +199,8 @@ function initWsServer(_argv, callbacks = undefined) {
 		wsServer = new WebSocketServer({server: webServer});
 		wsServer.on('connection', new_client);
 	});
+
+	return webServer;
 }
 
 module.exports = initWsServer;
