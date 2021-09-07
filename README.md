@@ -1,6 +1,5 @@
 # WebSocket-to-TCP proxy/bridge in NodeJS (forked & inspired by https://github.com/novnc/websockify)
-[![Build Status](https://travis-ci.org/maximegris/node-websockify.svg?branch=master)](https://travis-ci.org/maximegris/node-websockify) 
-[![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://github.com/maximegris/node-websockify/blob/master/LICENSE.md)
+[![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://github.com/vanhooferwin/node-websockify/blob/master/LICENSE.md)
 
 
 Node-websockify is a WebSocket-to-TCP proxy/bridge you can use in a NodeJS program. 
@@ -12,13 +11,13 @@ As said it is inspired of the javascript library of https://github.com/novnc/web
 Import this module in your project
 
 ```bash
-npm install --save @maximegris/node-websockify
+npm install --save @vanhooferwin/node-websockify
 ```
 
 Require the module and call the main function in your program code
 
 ```javascript
-var websockify = require('@maximegris/node-websockify');
+var websockify = require('@vanhooferwin/node-websockify');
 websockify({
 source: 'url:port',
 target: 'url:port',
@@ -31,7 +30,7 @@ key: 'certSSL-key'
 Example :
 
 ```javascript
-var websockify = require('@maximegris/node-websockify');
+var websockify = require('@vanhooferwin/node-websockify');
 var websockifyServer = websockify({  source: '127.0.0.1:8080', target: '192.168.0.100:5900'});
 ```
 

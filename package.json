@@ -2,7 +2,7 @@
   "author": "Erwin van Hoof | SiteOn",
   "name": "@vanhooferwin/node-websockify",
   "description": "node-websockify is a WebSocket-to-TCP proxy/bridge you can use in a NodeJS program",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "license": "MIT",
   "main": "websockify.js",
   "bugs": {
