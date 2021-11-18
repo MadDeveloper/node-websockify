@@ -2,9 +2,11 @@ os:
   - linux
 language: node_js
 node_js:
-  - '12'
-  - '11'
-  - '10'
+  - "16"
+  - "14"
+  - "12"
+  - "11"
+  - "10"
 install:
   - npm set progress=false
   - npm install

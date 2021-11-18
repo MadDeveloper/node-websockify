@@ -4,4 +4,4 @@ coverage/
 .idea/
 .tmp/
 dist/
-package-lock.json
+.vscode/

@@ -1,28 +1,30 @@
 {
-  "author": "Erwin van Hoof | SiteOn",
-  "name": "@vanhooferwin/node-websockify",
+  "author": "Julien Sergent | MadDeveloper",
+  "name": "@maddeveloper/node-websockify",
   "description": "node-websockify is a WebSocket-to-TCP proxy/bridge you can use in a NodeJS program",
   "version": "1.0.9",
   "license": "MIT",
   "main": "websockify.js",
   "bugs": {
-    "url": "https://github.com/vanhooferwin/node-websockify/issues"
+    "url": "https://github.com/maddeveloper/node-websockify/issues"
   },
-  "homepage": "https://github.com/vanhooferwin/node-websockify#readme",
+  "homepage": "https://github.com/maddeveloper/node-websockify#readme",
   "keywords": [
-    "webscoket",
+    "websocket",
     "tcp",
     "proxy"
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/vanhooferwin/node-websockify.git"
+    "url": "git://github.com/maddeveloper/node-websockify.git"
   },
   "dependencies": {
     "mime": "2.4.4",
     "ws": "7.2.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "prettier": "^2.4.1"
+  },
   "scripts": {
     "test": "cd test && npm install && npm start"
   },
@@ -33,6 +35,6 @@
     "websockify": "./websockify.js"
   },
   "engines": {
-    "node": ">=0.8.9"
+    "node": ">=8.10"
   }
 }

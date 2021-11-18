@@ -1,206 +1,144 @@
-'use strict'
+const net = require("net")
+const http = require("http")
+const https = require("https")
+const { URL } = require("url")
+const path = require("path")
+const fs = require("fs")
+const mime = require("mime")
+const WebSocketServer = require("ws").Server
 
-var net = require('net'),
-	http = require('http'),
-	https = require('https'),
-	url = require('url'),
-	path = require('path'),
-	fs = require('fs'),
-
-	mime = require('mime'),
-	Buffer = require('buffer').Buffer,
-	WebSocketServer = require('ws').Server,
-
-	webServer, wsServer,
-	source_host, source_port, target_host, target_port,
-	argv = null,
-	
-	onConnectedCallback = null,
-	onDisconnectedCallback = null;	
+let webServer = null
+let wsServer = null
+let source_port = null
+let target_host = null
+let target_port = null
+let web = false
+let callbacks = {}
 
 // Handle new WebSocket client
-var new_client = function(client, req) {
-	var clientAddr = client._socket.remoteAddress, log;
-	console.log(req ? req.url : client.upgradeReq.url);
-	log = function (msg) {
-		console.log(' ' + clientAddr + ': '+ msg);
-	};
-	log('WebSocket connection from : ' + clientAddr);
-	log('Version ' + client.protocolVersion + ', subprotocol: ' + client.protocol);
+function onConnectWebsocketClient(client) {
+  const target = net.createConnection(target_port, target_host, () => {
+    if (typeof callbacks.onConnected === "function") {
+      try {
+        callbacks.onConnected(client, target)
+      } catch (e) {
+        target.end()
+      }
+    }
+  })
 
-	var target = net.createConnection(target_port,target_host, function() {
-		log('connected to target');
-		if (onConnectedCallback)
-		{
-			try {
-				onConnectedCallback(client, target);
-			} catch(e) {
-				log("onConnectedCallback failed, cleaning up target");
-				target.end();
-			}
-		}
-	});
-	target.on('data', function(data) {
-		//log("sending message: " + data);
-		try {
-			client.send(data);
-		} catch(e) {
-			log("Client closed, cleaning up target");
-			target.end();
-		}
-	});
-	target.on('end', function() {
-		log('target disconnected');
-		client.close();
-	});
-	target.on('error', function() {
-		log('target connection error');
-		target.end();
-		client.close();
-	});
+  target.on("data", (data) => {
+    try {
+      client.send(data)
+    } catch (e) {
+      target.end()
+    }
+  })
+  target.on("end", () => client.close())
+  target.on("error", () => {
+    target.end()
+    client.close()
+  })
 
-	client.on('message', function(msg) {
-		//log('got message: ' + msg);
-		target.write(msg);
-	});
-	client.on('close', function(code, reason) {
-		
-		if (onDisconnectedCallback)
-		{
-			try {
-				onDisconnectedCallback(client, code, reason);
-			} catch(e) {
-				log("onDisconnectedCallback failed");
-			}
-		}		
+  client.on("message", (msg) => target.write(msg))
+  client.on("close", (code, reason) => {
+    if (typeof callbacks.onDisconnected === "function") {
+      try {
+        callbacks.onDisconnected(client, target, code, reason)
+      } catch (e) {}
+    }
 
-		log('WebSocket client disconnected: ' + code + ' [' + reason + ']');
-		target.end();
-	});
-	client.on('error', function(a) {
-		log('WebSocket client error: ' + a);
-		target.end();
-	});
-};
-
+    target.end()
+  })
+  client.on("error", () => target.end())
+}
 
 // Send an HTTP error response
-var http_error = function (response, code, msg) {
-	response.writeHead(code, {"Content-Type": "text/plain"});
-	response.write(msg + "\n");
-	response.end();
-	return;
+function requestError(response, code, msg) {
+  response.writeHead(code, { "Content-Type": "text/plain" })
+  response.write(msg + "\n")
+  response.end()
+
+  return
 }
 
 // Process an HTTP static file request
-var http_request = function (request, response) {
-//    console.log("pathname: " + url.parse(req.url).pathname);
-//    res.writeHead(200, {'Content-Type': 'text/plain'});
-//    res.end('okay');
+function requestListener(request, response) {
+  if (!web) {
+    return requestError(response, 403, "403 Permission Denied")
+  }
 
-	if (!argv.web) {
-		return http_error(response, 403, "403 Permission Denied");
-	}
+  const pathname = new URL(request.url).pathname
+  let filename = path.join(web, pathname)
+  const exists = fs.existsSync(filename)
 
-	var uri = url.parse(request.url).pathname
-		, filename = path.join(argv.web, uri);
-	
-	fs.exists(filename, function(exists) {
-		if(!exists) {
-			return http_error(response, 404, "404 Not Found");
-		}
+  if (!exists) {
+    return requestError(response, 404, "404 Not Found")
+  }
 
-		if (fs.statSync(filename).isDirectory()) {
-			filename += '/index.html';
-		}
+  if (fs.statSync(filename).isDirectory()) {
+    filename += "/index.html"
+  }
 
-		fs.readFile(filename, "binary", function(err, file) {
-			if(err) {
-				return http_error(response, 500, err);
-			}
+  fs.readFile(filename, "binary", (error, file) => {
+    if (error) {
+      return requestError(response, 500, error)
+    }
 
-			response.setHeader('Content-type', mime.getType(path.parse(uri).ext));
-			response.writeHead(200);
-			response.write(file, "binary");
-			response.end();
-		});
-	});
-};
-
-function initWsServer(_argv, callbacks = undefined) {
-	argv = _argv;
-	var source_arg = argv.source;
-	var target_arg = argv.target;
-	
-	if (!callbacks)
-	{
-		console.log("no callbacks");
-	}
-	else
-	{
-		if (callbacks.onConnected)
-		{
-			onConnectedCallback = callbacks.onConnected;
-			console.log("onConnectedCallback registered");
-		}
-		
-		if (callbacks.onDisconnected)
-		{
-			onDisconnectedCallback = callbacks.onDisconnected;
-			console.log("onDisconnectedCallback registered");			
-		}		
-	}
-	
-	// parse source and target arguments into parts
-	try {
-		var idx;
-		idx = source_arg.indexOf(":");
-		if (idx >= 0) {
-			source_host = source_arg.slice(0, idx);
-			source_port = parseInt(source_arg.slice(idx+1), 10);
-		} else {
-			source_host = "";
-			source_port = parseInt(source_arg, 10);
-		}
-
-		idx = target_arg.indexOf(":");
-		if (idx < 0) {
-			throw("target must be host:port");
-		}
-		target_host = target_arg.slice(0, idx);
-		target_port = parseInt(target_arg.slice(idx+1), 10);
-
-		if (isNaN(source_port) || isNaN(target_port)) {
-			throw("illegal port");
-		}
-	} catch(e) {
-		console.error("websockify.js [--web web_dir] [--cert cert.pem [--key key.pem]] [source_addr:]source_port target_addr:target_port");
-		process.exit(2);
-	}
-
-	console.log("WebSocket settings: ");
-	console.log("    - proxying from " + source_host + ":" + source_port +
-				" to " + target_host + ":" + target_port);
-	if (argv.web) {
-		console.log("    - Web server active. Serving: " + argv.web);
-	}
-
-	if (argv.cert) {
-		argv.key = argv.key || argv.cert;
-		var cert = fs.readFileSync(argv.cert),
-			key = fs.readFileSync(argv.key);
-		console.log("    - Running in encrypted HTTPS (wss://) mode using: " + argv.cert + ", " + argv.key);
-		webServer = https.createServer({cert: cert, key: key}, http_request);
-	} else {
-		console.log("    - Running in unencrypted HTTP (ws://) mode");
-		webServer = http.createServer(http_request);
-	}
-	webServer.listen(source_port, function() {
-		wsServer = new WebSocketServer({server: webServer});
-		wsServer.on('connection', new_client);
-	});
-
-	return webServer;
+    response.setHeader("Content-type", mime.getType(path.parse(pathname).ext))
+    response.writeHead(200)
+    response.write(file, "binary")
+    response.end()
+  })
 }
 
-module.exports = initWsServer;
+module.exports = (options, _callbacks) => {
+  web = options.web || web
+  callbacks = _callbacks || callbacks || {}
+
+  const source_arg = options.source
+  const target_arg = options.target
+
+  // parse source and target arguments into parts
+  try {
+    if (source_arg.includes(":")) {
+      source_port = parseInt(source_arg.slice(source_arg.indexOf(":") + 1), 10)
+    } else {
+      source_port = parseInt(source_arg, 10)
+    }
+
+    if (!target_arg.includes(":")) {
+      throw "target must be host:port"
+    }
+
+    const [host, port] = target_arg.split(":")
+
+    target_host = host
+    target_port = port
+
+    if (isNaN(source_port) || isNaN(target_port)) {
+      throw "illegal port"
+    }
+  } catch (e) {
+    // websockify.js [--web web_dir] [--cert cert.pem [--key key.pem]] [source_addr:]source_port target_addr:target_port
+    process.exit(2)
+  }
+
+  if (options.cert) {
+    options.key = options.key || options.cert
+
+    const cert = fs.readFileSync(options.cert)
+    const key = fs.readFileSync(options.key)
+
+    webServer = https.createServer({ cert, key }, requestListener)
+  } else {
+    webServer = http.createServer(requestListener)
+  }
+
+  wsServer = new WebSocketServer({ server: webServer })
+  wsServer.on("connection", onConnectWebsocketClient)
+
+  webServer.listen(source_port)
+
+  return [webServer, wsServer]
+}
