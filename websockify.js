@@ -119,9 +119,9 @@ module.exports = (options, _callbacks) => {
     if (isNaN(source_port) || isNaN(target_port)) {
       throw "illegal port"
     }
-  } catch (e) {
+  } catch (error) {
     // websockify.js [--web web_dir] [--cert cert.pem [--key key.pem]] [source_addr:]source_port target_addr:target_port
-    process.exit(2)
+    return [null, null, error]
   }
 
   if (options.cert) {
@@ -140,5 +140,5 @@ module.exports = (options, _callbacks) => {
 
   webServer.listen(source_port)
 
-  return [webServer, wsServer]
+  return [webServer, wsServer, null]
 }
