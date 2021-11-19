@@ -9,15 +9,15 @@ const WebSocketServer = require("ws").Server
 
 let webServer = null
 let wsServer = null
-let source_port = null
-let target_host = null
-let target_port = null
+let sourcePort = null
+let targetHost = null
+let targetPort = null
 let web = false
 let callbacks = {}
 
 // Handle new WebSocket client
 function onConnectWebsocketClient(client) {
-  const target = net.createConnection(target_port, target_host, () => {
+  const target = net.createConnection(targetPort, targetHost, () => {
     if (typeof callbacks.onConnected === "function") {
       try {
         callbacks.onConnected(client, target)
@@ -92,53 +92,66 @@ function requestListener(request, response) {
   })
 }
 
-module.exports = (options, _callbacks) => {
-  web = options.web || web
+module.exports = (args = {}, _callbacks = null) => {
+  web = args.web || web
   callbacks = _callbacks || callbacks || {}
 
-  const source_arg = options.source
-  const target_arg = options.target
+  const { source, target, server, webSocketServer } = args || {}
 
   // parse source and target arguments into parts
   try {
-    if (source_arg.includes(":")) {
-      source_port = parseInt(source_arg.slice(source_arg.indexOf(":") + 1), 10)
+    if (source.includes(":")) {
+      sourcePort = parseInt(source.slice(source.indexOf(":") + 1), 10)
     } else {
-      source_port = parseInt(source_arg, 10)
+      sourcePort = parseInt(source, 10)
     }
 
-    if (!target_arg.includes(":")) {
+    if (!target.includes(":")) {
       throw "target must be host:port"
     }
 
-    const [host, port] = target_arg.split(":")
+    const [host, port] = target.split(":")
 
-    target_host = host
-    target_port = port
+    targetHost = host
+    targetPort = port
 
-    if (isNaN(source_port) || isNaN(target_port)) {
+    if (isNaN(sourcePort) || isNaN(targetPort)) {
       throw "illegal port"
     }
   } catch (error) {
-    // websockify.js [--web web_dir] [--cert cert.pem [--key key.pem]] [source_addr:]source_port target_addr:target_port
     return [null, null, error]
   }
 
-  if (options.cert) {
-    options.key = options.key || options.cert
-
-    const cert = fs.readFileSync(options.cert)
-    const key = fs.readFileSync(options.key)
-
-    webServer = https.createServer({ cert, key }, requestListener)
+  if (server) {
+    webServer = server
   } else {
-    webServer = http.createServer(requestListener)
+    if (args.cert) {
+      args.key = args.key || args.cert
+
+      const cert = fs.readFileSync(args.cert)
+      const key = fs.readFileSync(args.key)
+
+      webServer = https.createServer({ cert, key }, requestListener)
+    } else {
+      webServer = http.createServer(requestListener)
+    }
   }
 
-  wsServer = new WebSocketServer({ server: webServer })
+  if (webSocketServer) {
+    wsServer = webSocketServer
+  } else {
+    wsServer = new WebSocketServer({ server: webServer })
+  }
+
   wsServer.on("connection", onConnectWebsocketClient)
 
-  webServer.listen(source_port)
+  if (!server) {
+    try {
+      webServer.listen(sourcePort)
+    } catch (error) {
+      return [webServer, wsServer, error]
+    }
+  }
 
   return [webServer, wsServer, null]
 }

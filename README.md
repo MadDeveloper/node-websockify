@@ -19,7 +19,7 @@ Require the module and call the main function in your program code
 ```javascript
 import websockify from "@maddeveloper/node-websockify"
 
-const [webServer, wsServer] = websockify({
+const [webServer, wsServer, error] = websockify({
   source: "url:port",
   target: "url:port",
   web: "./directory",
@@ -33,18 +33,33 @@ Example :
 ```javascript
 import websockify from "@maddeveloper/node-websockify"
 
-const websockifyServer = websockify({
+const [webServer, wsServer, error] = websockify({
   source: "127.0.0.1:8080",
   target: "192.168.0.100:5900",
 })
 ```
 
+## Params
+
+| Name            | Description                                       | Default         |
+| --------------- | ------------------------------------------------- | --------------- |
+| source          | URL of websocket Server                           | null            |
+| target          | URL of the VNC Server                             | null            |
+| web             | Directory of static sources exposed by the server | null (optional) |
+| cert            | Path of the SSL certificate                       | null (optional) |
+| key             | Key of the SSL certificate                        | null (optional) |
+| server          | HTTP server to use                                | null (optional) |
+| webSocketServer | WebSocket server to use                           | null (optional) |
+
 ## Options
 
-| Alias  | Values                                            | Default         |
-| ------ | ------------------------------------------------- | --------------- |
-| source | URL of websocket Server                           | null            |
-| target | URL of the VNC Server                             | null            |
-| web    | Directory of static sources exposed by the server | null (optional) |
-| cert   | Path of the SSL certificate                       | null (optional) |
-| key    | Key of the SSL certificate                        | null (optional) |
+| Name           | Description                                       | Default   |
+| -------------- | ------------------------------------------------- | --------- |
+| onConnected    | Called when connection is established with target | undefined |
+| onDisconnected | Called when connection is interruped with target  | undefined |
+
+## CLI usage
+
+```bash
+websockify [--web web_dir] [--cert cert.pem [--key key.pem]] [source_addr:]source_port target_addr:target_port
+```

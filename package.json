@@ -4,7 +4,7 @@
   "description": "node-websockify is a WebSocket-to-TCP proxy/bridge you can use in a NodeJS program",
   "version": "1.0.9",
   "license": "MIT",
-  "main": "websockify.js",
+  "main": "index.js",
   "bugs": {
     "url": "https://github.com/maddeveloper/node-websockify/issues"
   },
@@ -29,10 +29,10 @@
     "test": "cd test && npm install && npm start"
   },
   "files": [
-    "websockify.js"
+    "index.js"
   ],
   "bin": {
-    "websockify": "./websockify.js"
+    "websockify": "./index.js"
   },
   "engines": {
     "node": ">=8.10"

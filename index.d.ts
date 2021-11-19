@@ -1,5 +1,5 @@
 declare module "@maddeveloper/node-websockify" {
-  type WebServer = import("http").Server
+  type Server = import("http").Server
   type WebSocketServer = import("ws").WebSocketServer
   type VNCSocket = import("net").Socket
 
@@ -10,6 +10,8 @@ declare module "@maddeveloper/node-websockify" {
       web?: string
       cert?: string
       key?: string
+      server: Server
+      webSocketServer: WebSocketServer
     },
     callbacks?: {
       onConnected?(client: WebSocketServer, vncSocket: VNCSocket): void
@@ -20,7 +22,7 @@ declare module "@maddeveloper/node-websockify" {
         message: string
       ): void
     }
-  ): [WebServer, WebSocketServer]
+  ): [Server | null, WebSocketServer | null, Error | null | undefined]
 
   export default websockify
 }
