@@ -2,7 +2,7 @@
   "author": "Julien Sergent | MadDeveloper",
   "name": "@maddeveloper/node-websockify",
   "description": "node-websockify is a WebSocket-to-TCP proxy/bridge you can use in a NodeJS program",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "license": "MIT",
   "main": "index.js",
   "bugs": {
