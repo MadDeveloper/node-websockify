@@ -1,4 +1,6 @@
-package-lock.json
-webpack.config.js
+node_modules/
 test/
+package-lock.json
 .travis.yml
+.prettierrc
+.gitignore
